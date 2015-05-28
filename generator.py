@@ -21,59 +21,94 @@ def configs():
 
   #print(str(config._sections["section1"]['sections']))
   #json.loads(config._sections["section1"]['sections'])
-  parse_chunk(configs[0])
+  #parse_chunk(configs[0])
   return configs
   pass
 
 def parse_chunk(config_section):
   parsed = []
+  #sections
   inner_section = json.loads(config_section[0])
   tmp = []
   for a in inner_section :
-    tmp.append(inner_section[a])
+    tmp+=inner_section[a]
   parsed.append(tmp)
+  #aprices
   tmp = []
   inner_section = json.loads(config_section[1])
-  print(str(inner_section))
+  #print(str(inner_section))
   for a in inner_section :
-    tmp.append(inner_section[a])
+    tmp+=inner_section[a]
   parsed.append(tmp)
   tmp = []
+  #apercs
   inner_section = json.loads(config_section[2])
   for a in inner_section :
-    tmp.append(inner_section[a])
+    tmp+=inner_section[a]
   parsed.append(tmp)
   tmp = []
+  #perc_bying
   inner_section = json.loads(config_section[3])
   for a in inner_section :
-    tmp.append(inner_section[a])
+    tmp+=inner_section[a]
   parsed.append(tmp)
+  #url_req
   parsed.append(long(config_section[4]))
+  #days
   parsed.append(long(config_section[5]))
   return parsed
 
 
-def send_request(name,what_req,price,time):
+def generate_request(name,what_req,price,time):
+  tmp = []
+  tmp.append(name)
+  if what_req == 1:
+    tmp.append('buy')
+  else :
+    tmp.append('look')
+  tmp.append(time)
+  tmp.append(price)
+
+  a = json.dumps(tmp)
+  return a
+
+
   pass
 
-def generate_data(file_name='kafka.list', parsed = None ):
+def generate_time(requests,days):
+  SECOUNDS = 86400
+  num_chunks = days * SECOUNDS
+  chunksize = requests // num_chunks
+  tmp = (num_chunks - 1) * [chunksize]
+  tmp += [requests % num_chunks]
+  return tmp
+
+
+
+
+def generate_data_chunk(ofile, parsed = None,start_time = 0):
   #generate array
-  for x in parsed:
-    #generate_array for data generation
-    arr = []
-    for a in xrange(0,len(x[3])):
-      tmp=int(x[3][a])
-      arr += tmp * [a]
-    random.shuffle(arr)
-    #generate data
-    for i in xrange(0, parsed[4]):
+  #print(parsed)
+  #generate_array for data generation
+  arr = []
+  for a in xrange(0,len(parsed[3])):
+    tmp=int(parsed[3][a])
+    arr += tmp * [a]
+  random.shuffle(arr)
+  #generate data
+  #print(arr)
+  ## genetate_time
+  time = generate_time(parsed[4],parsed[5])
+  #print(time)
+  for i in time:
+    for j in xrange(0,i):
       posit = random.randint(0,99)
-      what_request = np.random.binomial(1, int(x[2][posit])/100.0,1)
+      #print(parsed[int(arr[posit])])
+      what_request = np.random.binomial(1, parsed[3][arr[posit]]/100.0,1)
       #add time when done
-      send_request(x[0][posit],what_request,x[1],0)
-
-
-
+      #print(parsed[0])
+      data = generate_request(parsed[0][arr[posit]],what_request,parsed[1][arr[posit]], start_time + i)
+      ofile.write(data + '\n')
   pass
 
   #print(str(parsed))
@@ -82,10 +117,21 @@ def generate_data(file_name='kafka.list', parsed = None ):
 
 
 def generate():
-    sections = configs()
-    #for x in
+  sections = configs()
+  parsed = []
+  for x in sections :
+    parsed.append(parse_chunk(x))
 
-    #print(str(sections))
+  f = open("myfile.txt",'w')
+  time = 0
+  for x in parsed:
+    generate_data_chunk(f,x,time)
+    #x[5] is  days
+    time += 86400*x[5]
+  #send_request("Iphone",1,512,0)
+  #print(parsed)
+
+  #print(str(sections))
 
 
 
