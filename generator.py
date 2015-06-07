@@ -1,6 +1,5 @@
 import ConfigParser
 import json
-import kafka.producer
 import numpy as np
 import random
 def configs():
@@ -80,11 +79,11 @@ def generate_time(requests,days):
   num_chunks = days * SECOUNDS
   chunksize = requests // num_chunks
   tmp = (num_chunks - 1) * [chunksize]
-  tmp += [requests % num_chunks]
+  tmp += [requests % chunksize]
   return tmp
 
 
-
+START_TIME = 0
 
 def generate_data_chunk(ofile, parsed = None,start_time = 0):
   #generate array
@@ -107,8 +106,9 @@ def generate_data_chunk(ofile, parsed = None,start_time = 0):
       what_request = np.random.binomial(1, parsed[3][arr[posit]]/100.0,1)
       #add time when done
       #print(parsed[0])
-      data = generate_request(parsed[0][arr[posit]],what_request,parsed[1][arr[posit]], start_time + i)
+      data = generate_request(parsed[0][arr[posit]],what_request,parsed[1][arr[posit]], start_time + 1)
       ofile.write(data + '\n')
+    start_time +=1
   pass
 
   #print(str(parsed))
